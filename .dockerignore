@@ -1,0 +1,14 @@
+.git
+.env
+**/.venv
+**/node_modules
+**/.next
+vita-astronaut-health-monitor
+docs
+*.db
+*.jpg
+*.png
+*.docx
+*.md
+.pytest_cache
+__pycache__
