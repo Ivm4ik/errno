@@ -1,8 +1,16 @@
 # ERRNO — монітор здоров'я астронавта
 
+<img width="1280" height="719" alt="image" src="https://github.com/user-attachments/assets/871dcf3c-58eb-47b1-8579-a4cfa25cfb7e" />
+
+
+
+
 Навчальний прототип: корабель надсилає покази, штраф рахує індекс здоров'я, а Земля бачить їх на 20 хвилин пізніше. Це симуляція, не медична порада.
 
 Стек лишився колишній: FastAPI, aiosqlite, SQLite WAL, Next.js, TanStack Query. Генератор сценаріїв тепер окремий і бекенд не знає, що дані вигадані.
+<img width="1280" height="719" alt="image" src="https://github.com/user-attachments/assets/998c2bc7-32f4-4291-aade-f384ce5f6f9a" />
+
+
 
 ## Запуск
 
@@ -36,6 +44,9 @@ PYTHONPATH=. backend/.venv/bin/python -m generator run --scenario solar_storm --
 Логіни: `astronaut` (Олена Кравець, `A1`), `officer` (Тарас Бондар, `A2` — звичайний космонавт з break-glass у критиці, не медперсонал), `doctor` (головний лікар).
 
 ## Що рахує статус
+
+<img width="1689" height="1042" alt="image" src="https://github.com/user-attachments/assets/cf60128f-440f-47ac-886d-b7b6b6eb3194" />
+
 
 Для метрики `D = |V − B|`. Якщо `D` не більший за допуск, штраф 0, інакше `k * (D − допуск)`. Сума штрафів `S`, індекс `max(0, 100 − S)`.
 
