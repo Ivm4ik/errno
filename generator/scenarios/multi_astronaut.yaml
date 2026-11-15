@@ -1,0 +1,15 @@
+name: multi_astronaut
+duration: 120
+astronauts:
+  - id: A1
+    timeline:
+      - {at: 0, duration: 120, metric: HR, effect: step, magnitude: 80}
+    activity_schedule:
+      - {at: 0, duration: 120, mode: rest}
+  - id: A2
+    timeline: []
+    activity_schedule:
+      - {at: 0, duration: 120, mode: rest}
+expect:
+  - {at: 20, astronaut: A1, status: 2, breakglass: true}
+  - {at: 20, astronaut: A2, status: 0}

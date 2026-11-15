@@ -1,0 +1,9 @@
+name: hyperkalemia
+astronaut: A1
+duration: 120
+timeline:
+  - {at: 0, duration: 120, metric: K, effect: hold, magnitude: 6.0}
+activity_schedule:
+  - {at: 0, duration: 120, mode: rest}
+expect:
+  - {at: 20, astronaut: A1, status: 2, breakglass: true}

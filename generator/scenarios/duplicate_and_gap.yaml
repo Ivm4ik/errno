@@ -1,0 +1,11 @@
+name: duplicate_and_gap
+astronaut: A1
+duration: 180
+seq_jumps:
+  - {at: 60, seq: 1}
+  - {at: 120, seq: 8}
+timeline: []
+activity_schedule:
+  - {at: 0, duration: 180, mode: rest}
+expect:
+  - {at: 150, astronaut: A1, status: 0}

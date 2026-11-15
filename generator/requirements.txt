@@ -1,0 +1,6 @@
+httpx>=0.28
+websockets>=14
+pyyaml>=6
+numpy>=2
+fastapi>=0.115
+uvicorn>=0.32

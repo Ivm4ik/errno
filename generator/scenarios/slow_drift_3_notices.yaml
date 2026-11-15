@@ -1,0 +1,10 @@
+name: slow_drift_3_notices
+astronaut: A1
+duration: 700
+timeline:
+  - {at: 0, duration: 700, metric: BP, effect: step, magnitude: 25.6}
+activity_schedule:
+  - {at: 0, duration: 700, mode: rest}
+expect:
+  - {at: 30, astronaut: A1, status: 1}
+  - {at: 620, astronaut: A1, status: 2, breakglass: true}

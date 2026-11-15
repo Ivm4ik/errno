@@ -1,0 +1,8 @@
+name: exercise_false_alarm
+astronaut: A1
+duration: 90
+timeline: []
+activity_schedule:
+  - {at: 0, duration: 90, mode: exercise}
+expect:
+  - {at: 60, astronaut: A1, status: 0}

@@ -1,0 +1,10 @@
+name: solar_storm
+astronaut: A1
+duration: 180
+timeline:
+  - {at: 0, duration: 180, metric: RAD, effect: step, magnitude: 1.8}
+  - {at: 30, duration: 150, metric: HR, effect: ramp, magnitude: 15}
+activity_schedule:
+  - {at: 0, duration: 180, mode: eva}
+expect:
+  - {at: 20, astronaut: A1, status: 2, breakglass: true, earth_packet_visible_at: 1220}

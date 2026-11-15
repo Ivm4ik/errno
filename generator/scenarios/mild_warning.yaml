@@ -1,0 +1,9 @@
+name: mild_warning
+astronaut: A1
+duration: 12
+timeline:
+  - {at: 0, duration: 12, metric: TEMP, effect: step, magnitude: 1.0}
+activity_schedule:
+  - {at: 0, duration: 12, mode: rest}
+expect:
+  - {at: 10, astronaut: A1, status: 1}

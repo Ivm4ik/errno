@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERRNO Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #07090d;
+      --bg-2: #0b0f16;
+      --panel: #10151e;
+      --raised: #161c28;
+      --line: #232b3a;
+      --line-strong: #334055;
+      --ink: #f2f5fa;
+      --muted: #93a0b5;
+      --faint: #66748c;
+      --accent: #4ec4f5;
+      --accent-2: #7dd3fc;
+      --accent-ink: #031018;
+      --ok: #3dd68c;
+      --ok-dim: color-mix(in srgb, var(--ok) 16%, transparent);
+      --warn: #f5c14c;
+      --warn-dim: color-mix(in srgb, var(--warn) 14%, transparent);
+      --bad: #ff7a8a;
+      --bad-dim: color-mix(in srgb, var(--bad) 14%, transparent);
+      --radius: 16px;
+      --font: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 18px 48px -24px rgb(0 0 0 / 0.75);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0; min-height: 100vh; font: 14px/1.45 var(--font);
+      color: var(--ink); background: var(--bg);
+      background-image:
+        radial-gradient(900px 420px at 8% -10%, rgb(78 196 245 / 0.11), transparent 55%),
+        radial-gradient(700px 380px at 92% 0%, rgb(61 214 140 / 0.06), transparent 50%),
+        linear-gradient(180deg, #0a0d13, var(--bg) 28%);
+    }
+    button, input, select { font: inherit; color: inherit; }
+    .top {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      background: color-mix(in srgb, var(--bg-2) 78%, transparent);
+      backdrop-filter: blur(18px) saturate(1.2);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .mark {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 28%, var(--raised)), var(--raised));
+      color: var(--accent-2); font-family: var(--mono); font-weight: 600; font-size: 11px;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+      letter-spacing: 0.04em;
+    }
+    h1 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 12px; border-radius: 999px;
+      background: color-mix(in srgb, var(--raised) 88%, transparent);
+      border: 1px solid var(--line);
+      color: var(--muted); font-size: 11.5px; font-weight: 550; font-family: var(--mono);
+      letter-spacing: 0.03em;
+    }
+    .status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+    .status.live .dot { background: var(--ok); box-shadow: 0 0 0 4px var(--ok-dim); }
+    .status.warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); color: var(--warn); }
+    main { max-width: 1480px; margin: 0 auto; padding: 18px 16px 28px; }
+    .layout { display: grid; gap: 16px; }
+    @media (min-width: 1100px) {
+      .layout { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+      .rail { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; padding-right: 2px; }
+      .rail::-webkit-scrollbar { width: 6px; }
+      .rail::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 99px; }
+    }
+    .stack { display: grid; gap: 12px; }
+    .card {
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, #1a2230), var(--panel));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+    }
+    .card h2 { margin: 0 0 2px; font-size: 12px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .hint { margin: 0 0 12px; color: var(--faint); font-size: 12.5px; }
+    .crew { display: grid; gap: 8px; }
+    .crew-card {
+      text-align: left; cursor: pointer;
+      border: 1px solid var(--line); border-radius: 14px;
+      background: var(--raised); padding: 12px 14px; color: inherit;
+      transition: border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease);
+    }
+    .crew-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+    .crew-card.active {
+      border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--raised)), var(--raised));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    .crew-card .id { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .crew-card .name { font-weight: 650; margin-top: 3px; font-size: 14.5px; }
+    .crew-card .sub { margin-top: 2px; }
+    label.field { display: grid; gap: 6px; font-size: 12px; font-weight: 550; color: var(--muted); }
+    input[type=text], input[type=password], input[type=number], select {
+      width: 100%; border-radius: 11px;
+      border: 1px solid var(--line-strong);
+      background: var(--bg); color: var(--ink); padding: 10px 12px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus { outline: none; border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .chip, .btn {
+      border: 0; cursor: pointer; font-weight: 550;
+      border-radius: 999px; transition: background .14s var(--ease), border-color .14s, color .14s, transform .14s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .act {
+      padding: 12px 14px; border-radius: 14px;
+      background: var(--raised); border: 1px solid var(--line);
+    }
+    .act-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .act-head .lbl { font-size: 12px; font-weight: 550; color: var(--muted); }
+    .act-head .cur { font-family: var(--mono); font-size: 12px; font-weight: 650; color: var(--accent); }
+    .act-slider {
+      -webkit-appearance: none; width: 100%; height: 7px; border-radius: 999px;
+      background: linear-gradient(90deg, #4ec4f5 0%, #3dd68c 52%, #f5c14c 100%);
+      outline: none; border: 0; margin: 2px 0 8px;
+    }
+    .act-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+      background: var(--ink); border: 3px solid var(--accent);
+      cursor: grab; box-shadow: 0 0 0 4px rgb(78 196 245 / 0.16);
+    }
+    .act-marks {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      font-size: 11px; color: var(--faint); font-family: var(--mono);
+    }
+    .act-marks span { cursor: pointer; }
+    .act-marks span:nth-child(1) { text-align: left; }
+    .act-marks span:nth-child(2) { text-align: center; }
+    .act-marks span:nth-child(3) { text-align: right; }
+    .act-marks span.on { color: var(--accent); font-weight: 650; }
+    .actions { display: flex; flex-wrap: wrap; gap: 7px; }
+    .btn {
+      padding: 9px 14px; font-size: 12.5px;
+      background: var(--raised); color: var(--accent-2); border: 1px solid var(--line);
+    }
+    .btn:hover { border-color: var(--line-strong); background: color-mix(in srgb, var(--accent) 8%, var(--raised)); }
+    .btn.filled {
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      color: var(--accent-ink); border-color: transparent;
+      box-shadow: 0 8px 20px -10px rgb(78 196 245 / 0.55);
+    }
+    .btn.filled:hover { filter: brightness(1.05); }
+    .btn.tonal { background: color-mix(in srgb, var(--accent) 14%, var(--raised)); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+    .btn.danger { background: var(--bad-dim); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 28%, var(--line)); }
+    .btn.ok { background: var(--ok-dim); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 28%, var(--line)); }
+    .btn.warn { background: var(--warn-dim); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 28%, var(--line)); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn.sm { padding: 7px 11px; font-size: 12px; }
+    .switch {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 12px; border-radius: 12px; background: var(--raised); border: 1px solid var(--line);
+    }
+    .switch span { font-size: 13px; font-weight: 550; }
+    .toggle {
+      width: 46px; height: 28px; border-radius: 999px;
+      border: 1px solid var(--line-strong); background: var(--bg);
+      position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--accent); border-color: var(--accent); }
+    .toggle i {
+      position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+      background: var(--muted); transition: transform .18s var(--ease), background .18s;
+    }
+    .toggle.on i { transform: translateX(18px); background: var(--accent-ink); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .toolbar h2 { font-size: 15px !important; letter-spacing: -0.02em !important; text-transform: none !important; color: var(--ink) !important; font-weight: 650 !important; }
+    .filters {
+      display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px;
+      position: sticky; top: 64px; z-index: 5; padding: 8px 0;
+      background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(10px);
+    }
+    .chip {
+      padding: 7px 13px; font-size: 12px;
+      background: var(--raised); color: var(--muted); border: 1px solid var(--line);
+    }
+    .chip:hover { color: var(--ink); }
+    .chip.on {
+      background: color-mix(in srgb, var(--accent) 16%, var(--raised));
+      color: var(--accent-2);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+    }
+    .sensors { display: grid; gap: 12px; }
+    @media (min-width: 920px) { .sensors { grid-template-columns: 1fr 1fr; } }
+    .sensor {
+      display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 12px; align-items: center;
+      border-radius: 16px; background: var(--raised); padding: 14px 14px 12px;
+      border: 1px solid var(--line); border-left: 3px solid var(--faint);
+      transition: border-color .18s var(--ease), box-shadow .18s var(--ease);
+    }
+    .sensor:hover { border-color: var(--line-strong); }
+    .sensor.enabled { border-left-color: var(--ok); }
+    .sensor.yellow { border-left-color: var(--warn); }
+    .sensor.red { border-left-color: var(--bad); box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 18%, transparent); }
+    .sensor .value { font-family: var(--mono); font-size: 24px; font-weight: 650; letter-spacing: -0.04em; line-height: 1; }
+    .sensor .unit { color: var(--muted); font-size: 12px; margin-left: 5px; }
+    .sensor .live-tag {
+      display: inline-block; margin-top: 4px; font-family: var(--mono); font-size: 10px;
+      color: var(--faint); letter-spacing: 0.04em;
+    }
+    .sensor .live-tag.on { color: var(--accent); }
+    .sensor-title { font-weight: 650; font-size: 14px; letter-spacing: -0.01em; }
+    .sensor-code { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 2px; }
+    .sensor-controls { grid-column: 1 / -1; display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .slide {
+      display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    }
+    .slide .tag { font-size: 10.5px; font-weight: 650; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+    .slide .range-wrap { display: grid; gap: 5px; min-width: 0; }
+    .slide .ends { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--faint); }
+    .slide .send { align-self: stretch; min-width: 3.4rem; }
+    .dev-panel {
+      display: grid; gap: 10px;
+      padding: 12px; border-radius: 14px;
+      background:
+        radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 55%),
+        var(--bg);
+      border: 1px solid var(--line);
+    }
+    .dev-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 640px) { .dev-row { grid-template-columns: 1fr; } }
+    .dev-side {
+      display: grid; gap: 7px;
+      padding: 10px; border-radius: 12px;
+      background: var(--raised); border: 1px solid var(--line);
+    }
+    .dev-side.minus { border-color: color-mix(in srgb, var(--bad) 32%, var(--line)); }
+    .dev-side.plus { border-color: color-mix(in srgb, var(--ok) 32%, var(--line)); }
+    .dev-side .lab {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 10.5px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .dev-side.minus .lab { color: var(--bad); }
+    .dev-side.plus .lab { color: var(--ok); }
+    .dev-side .lab em { font-style: normal; font-family: var(--mono); font-weight: 650; color: var(--ink); }
+    .dev-side .pair { display: grid; grid-template-columns: minmax(0,1fr) 4.8rem; gap: 8px; align-items: center; }
+    .jnum {
+      width: 100%; padding: 8px; border-radius: 10px; text-align: right;
+      border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink);
+      font-family: var(--mono); font-size: 12px;
+    }
+    .inten {
+      display: grid; gap: 7px; padding: 10px; border-radius: 12px;
+      background: var(--raised); border: 1px solid var(--line);
+    }
+    .inten .lab {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 10.5px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .inten .lab em { font-style: normal; font-family: var(--mono); color: var(--accent); font-weight: 650; }
+    .inten-track {
+      -webkit-appearance: none; width: 100%; height: 9px; border-radius: 999px; border: 0; outline: none;
+      background: linear-gradient(90deg, #5c667a 0%, #4ec4f5 40%, #f5c14c 72%, #ff7a8a 100%);
+    }
+    .inten-track::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: var(--ink); border: 3px solid var(--accent);
+      box-shadow: 0 0 0 4px rgb(78 196 245 / 0.16); cursor: grab;
+    }
+    .inten-marks {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: 10px; color: var(--faint);
+    }
+    .band-viz {
+      position: relative; height: 30px; border-radius: 10px;
+      background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
+    }
+    .band-viz .fill {
+      position: absolute; top: 5px; bottom: 5px; border-radius: 7px;
+      background: linear-gradient(90deg,
+        color-mix(in srgb, var(--bad) 40%, transparent),
+        color-mix(in srgb, var(--accent) 24%, transparent),
+        color-mix(in srgb, var(--ok) 40%, transparent));
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+    .band-viz .needle {
+      position: absolute; top: 3px; bottom: 3px; width: 2px;
+      background: var(--ink); border-radius: 2px;
+      box-shadow: 0 0 0 3px rgb(242 245 250 / 0.12);
+      transform: translateX(-1px);
+    }
+    .band-viz .labels {
+      position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); pointer-events: none;
+    }
+    .band-meta {
+      display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px; color: var(--muted);
+    }
+    .band-meta strong { color: var(--ink); font-weight: 650; }
+    .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--faint); font-size: 11px; font-family: var(--mono); }
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 7px; border-radius: 999px;
+      background: linear-gradient(90deg, #3dd68c, #f5c14c, #ff7a8a); outline: none; border: 0;
+    }
+    input[type=range].dev-range {
+      background: linear-gradient(90deg, #1c2433, #4ec4f5);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: var(--ink); border: 3px solid var(--accent);
+      cursor: grab; box-shadow: 0 0 0 4px rgb(78 196 245 / 0.16);
+    }
+    .fault-tag {
+      display: inline-flex; padding: 1px 7px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; background: var(--bad-dim); color: var(--bad);
+    }
+    .band { font-family: var(--mono); font-size: 10px; text-transform: uppercase; font-weight: 650; margin-top: 2px; }
+    .band.green { color: var(--ok); }
+    .band.yellow { color: var(--warn); }
+    .band.red { color: var(--bad); }
+    .log {
+      font-family: var(--mono); font-size: 11px; white-space: pre-wrap;
+      background: var(--bg); border: 1px solid var(--line);
+      border-radius: 12px; padding: 12px;
+      min-height: 72px; max-height: 160px; overflow: auto; color: var(--muted);
+    }
+    .toast {
+      position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
+      padding: 12px 18px; border-radius: 12px;
+      background: #151c28; color: var(--ink); border: 1px solid var(--line-strong);
+      font-size: 13px; font-weight: 550; box-shadow: var(--shadow);
+      opacity: 0; pointer-events: none; transition: .22s var(--ease); z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    details summary { cursor: pointer; font-weight: 650; font-size: 13px; color: var(--muted); }
+    .burst-row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+    .scene-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .stream-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .live-note {
+      margin: 10px 0 0; padding: 10px 12px; border-radius: 12px;
+      background: color-mix(in srgb, var(--ok) 8%, var(--raised));
+      border: 1px solid color-mix(in srgb, var(--ok) 22%, var(--line));
+      color: var(--ok); font-size: 12px; line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark">GEN</div>
+      <div>
+        <h1>ERRNO Generator</h1>
+        <div class="sub">Пульт датчиків · зміни летять на панель одразу</div>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="status" id="runPill"><span class="dot"></span><span id="runText">IDLE</span></span>
+      <span class="status" id="sentPill"><span class="dot"></span><span id="sentText">0 PKT</span></span>
+      <span class="status" id="tokenPill"><span class="dot"></span><span id="tokenText">TOKEN?</span></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+      <aside class="stack rail">
+        <section class="card">
+          <h2>Екіпаж</h2>
+          <p class="hint">Кому крутити датчики</p>
+          <div class="crew" id="crew"></div>
+        </section>
+
+        <section class="card">
+          <h2>Звʼязок</h2>
+          <div class="stack">
+            <label class="field">Backend<input id="backend" type="text" value="http://127.0.0.1:8000" /></label>
+            <label class="field">Device token<input id="token" type="password" placeholder="sim-gw-1 secret" autocomplete="off" /></label>
+            <div class="act">
+              <div class="act-head">
+                <span class="lbl">Activity</span>
+                <span class="cur" id="actCur">rest</span>
+              </div>
+              <input class="act-slider" id="actSlider" type="range" min="0" max="2" step="1" value="0" />
+              <div class="act-marks" id="actMarks">
+                <span data-i="0" class="on">rest</span>
+                <span data-i="1">exercise</span>
+                <span data-i="2">eva</span>
+              </div>
+            </div>
+            <label class="field">Time scale ×
+              <input id="liveScale" type="number" value="1" min="1" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Швидкі сцени</h2>
+          <p class="hint">Одним кліком на панель</p>
+          <div class="burst-row">
+            <button class="btn filled" type="button" id="burstBtn">Надіслати все</button>
+            <button class="btn tonal" type="button" id="randomBurstBtn">Рандом ±</button>
+          </div>
+          <div class="scene-row" style="margin-top:8px">
+            <button class="btn ok sm" type="button" data-scene="nominal">Норма</button>
+            <button class="btn warn sm" type="button" data-scene="yellow">Жовта</button>
+            <button class="btn danger sm" type="button" data-scene="red_high">Crit ↑</button>
+            <button class="btn danger sm" type="button" data-scene="red_low">Crit ↓</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Поведінка</h2>
+          <div class="stack">
+            <div class="switch"><span>Авто (блукає сама)</span><button type="button" class="toggle" id="autoToggle" aria-label="Авто"><i></i></button></div>
+            <div class="switch"><span>Збої</span><button type="button" class="toggle" id="faultToggle" aria-label="Збої"><i></i></button></div>
+            <label class="field">Збої
+              <input id="faultRate" type="range" min="0" max="0.15" step="0.005" value="0.02" />
+              <div class="meta"><span>рідко</span><span id="faultRateVal">2%</span><span>часто</span></div>
+            </label>
+            <label class="field">Стрес
+              <input id="stress" type="range" min="-1" max="1" step="0.05" value="0" />
+              <div class="meta"><span>low</span><span id="stressVal">0</span><span>high</span></div>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="stream-row">
+            <button class="btn filled" type="button" id="startBtn">Старт stream</button>
+            <button class="btn danger" type="button" id="stopBtn">Стоп</button>
+          </div>
+          <p class="live-note">Тягнеш повзунок — панель бачить live. Stream тримає шум у −/+ вікні.</p>
+        </section>
+      </aside>
+
+      <section class="card">
+        <div class="toolbar">
+          <div>
+            <h2 id="title">Sensors</h2>
+            <p class="hint" id="hint" style="margin:0">Центр + мінус/плюс + інтенсивність · тягни — одразу на панель</p>
+          </div>
+          <div class="actions">
+            <button class="btn sm" type="button" id="allOn">Усі ON</button>
+            <button class="btn sm" type="button" id="vitalsOnly">Вітали</button>
+            <button class="btn sm" type="button" id="savePreset">Пресет</button>
+          </div>
+        </div>
+        <div class="filters" id="filters"></div>
+        <div class="sensors" id="sensors"></div>
+        <div style="margin-top:14px">
+          <h2>Log</h2>
+          <div class="log" id="log"></div>
+        </div>
+        <details style="margin-top:10px;padding:10px;border-radius:10px;background:var(--raised);border:1px solid var(--line)">
+          <summary>YAML scenarios</summary>
+          <div class="stack" style="margin-top:10px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <label class="field">Scenario<select id="scenario"></select></label>
+              <label class="field">Scale<input id="scale" type="number" value="60" min="1" /></label>
+            </div>
+            <button class="btn tonal" type="button" id="runScenario">Run scenario</button>
+          </div>
+        </details>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const VITALS = ["HR","ECG","RR","SPO2","BP","BPD","TEMP"];
+    const FILTERS = [
+      {id:"all", label:"Усі"},
+      {id:"cont", label:"Постійно", match:m => m.group === "continuous"},
+      {id:"chem", label:"30 хв", match:m => m.group === "chem"},
+      {id:"daily", label:"Щодня", match:m => m.group === "daily"},
+      {id:"rare", label:"Рідко", match:m => m.group === "rare"},
+    ];
+    const MODES = ["rest", "exercise", "eva"];
+    const state = {
+      meta:null, astronaut:"A1", mode:"rest", timeScale:1,
+      auto:false, faults:false, faultRate:0.02, stress:0,
+      enabled:new Set(), bias:{}, jitter:{}, jitterLo:{}, jitterHi:{}, intensity:{}, manual:{},
+      running:false, snapshot:null, filter:"cont",
+      dragging:null,
+    };
+    let pushTimer=null;
+    let pushInflight=null;
+    function intenLabel(v){
+      if(v < 0.25) return "спокійно";
+      if(v < 0.55) return "мʼяко";
+      if(v < 0.8) return "живіше";
+      return "шалено";
+    }
+    function patchBody(){
+      return {
+        activity_mode:state.mode, time_scale:state.timeScale, auto:state.auto, faults:state.faults,
+        fault_rate:state.faultRate, stress:state.stress,
+        enabled:[...state.enabled], bias:state.bias,
+        jitter:state.jitter, jitter_lo:state.jitterLo, jitter_hi:state.jitterHi, intensity:state.intensity,
+        manual:state.manual,
+      };
+    }
+    const $ = (id) => document.getElementById(id);
+    const logEl = $("log");
+    function log(m){ logEl.textContent = `[${new Date().toLocaleTimeString("uk-UA")}] ${m}\n` + logEl.textContent; }
+    function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
+    function cfg(){ return { backend:$("backend").value.trim(), device_token:$("token").value.trim() }; }
+    function base(code){ const m=state.meta.metrics.find(x=>x.code===code); return state.astronaut==="A2"?m.baseline_a2:m.baseline_a1; }
+    function fmt(code,v){ const step=state.meta.metrics.find(x=>x.code===code).step; const d=String(step).includes(".")?String(step).split(".")[1].length:0; return Number(v).toFixed(d); }
+    function visibleMetrics(){
+      const f = FILTERS.find(x=>x.id===state.filter) || FILTERS[0];
+      return state.meta.metrics.filter(m => !f.match || f.match(m));
+    }
+    function syncTokenPill(){
+      const ok = Boolean($("token").value.trim());
+      $("tokenPill").classList.toggle("warn", !ok);
+      $("tokenPill").classList.toggle("live", ok);
+      $("tokenText").textContent = ok ? "TOKEN OK" : "TOKEN?";
+    }
+    function syncAct(){
+      const i = Math.max(0, MODES.indexOf(state.mode));
+      state.mode = MODES[i];
+      $("actSlider").value = i;
+      $("actCur").textContent = state.mode;
+      [...$("actMarks").children].forEach((el, j) => el.classList.toggle("on", j === i));
+    }
+    function setMode(mode){
+      if(!MODES.includes(mode)) return;
+      state.mode = mode;
+      syncAct();
+      patch();
+    }
+
+    function renderCrew(){
+      $("crew").innerHTML = state.meta.crew.map(p=>`
+        <button type="button" class="crew-card ${p.id===state.astronaut?"active":""}" data-id="${p.id}">
+          <div class="id">${p.id} · ${p.baseline}</div>
+          <div class="name">${p.name}</div>
+          <div class="sub">${p.role}</div>
+        </button>`).join("");
+      $("crew").querySelectorAll(".crew-card").forEach(btn=>btn.onclick=()=>{
+        state.astronaut=btn.dataset.id;
+        seed();
+        renderCrew(); renderSensors(); updateTitles();
+        if(state.running) patch();
+      });
+    }
+
+    function renderFilters(){
+      $("filters").innerHTML = FILTERS.map(f=>`<button type="button" class="chip ${state.filter===f.id?"on":""}" data-f="${f.id}">${f.label}</button>`).join("");
+      $("filters").querySelectorAll(".chip").forEach(btn=>btn.onclick=()=>{ state.filter=btn.dataset.f; renderFilters(); renderSensors(); });
+    }
+
+    function jitterMax(m){
+      const span = Math.max(Number(m.tolerance)||0, Number(m.step)||1) * 3;
+      const hard = Math.max(0, (Number(m.max)-Number(m.min))/2);
+      return Math.max(span, Number(m.step)||1, Math.min(hard || span, span * 2));
+    }
+    function jitterStep(m){
+      const s = Number(m.step)||1;
+      return Math.max(s / 10, s * 0.05, 0.01);
+    }
+    function seed(){
+      state.enabled = new Set(state.meta.metrics.map(m=>m.code));
+      for(const m of state.meta.metrics){
+        state.manual[m.code]=base(m.code);
+        state.bias[m.code]=0;
+        state.jitter[m.code]=0;
+        state.jitterLo[m.code]=0;
+        state.jitterHi[m.code]=0;
+        state.intensity[m.code]=0.55;
+      }
+      state.stress=0; $("stress").value=0; $("stressVal").textContent="0";
+    }
+
+    function syncJitterMirror(code){
+      state.jitter[code] = Math.max(state.jitterLo[code]||0, state.jitterHi[code]||0);
+    }
+
+    function bandInfo(code, center){
+      const lo = state.jitterLo[code]||0;
+      const hi = state.jitterHi[code]||0;
+      const inten = state.intensity[code] ?? 0.55;
+      if(!(lo > 0 || hi > 0)) return {
+        lo, hi, inten, pm: "−0 / +0", rng: "без шуму",
+        leftPct: 50, rightPct: 50, needlePct: 50,
+      };
+      const span = Math.max(lo + hi, 1e-9);
+      const leftPct = (lo / span) * 100;
+      const rightPct = (hi / span) * 100;
+      const needlePct = (lo / span) * 100;
+      return {
+        lo, hi, inten,
+        pm: `−${fmt(code, lo)} / +${fmt(code, hi)}`,
+        rng: `${fmt(code, center - lo)} … ${fmt(code, center + hi)}`,
+        leftPct, rightPct, needlePct,
+      };
+    }
+
+    function paintSensorValue(code, center, { labelsOnly=false } = {}){
+      const card = $("sensors").querySelector(`article.sensor[data-code="${code}"]`);
+      if(!card) return;
+      const m = state.meta.metrics.find(x=>x.code===code);
+      if(!m) return;
+      const busy = state.dragging === code;
+      const ch = (state.snapshot?.channels||[]).find(c=>c.code===code);
+      const live = (state.running && ch && ch.value != null && !busy) ? ch.value : center;
+      const valEl = card.querySelector(".value");
+      if(valEl) valEl.textContent = fmt(code, live);
+      const liveTag = card.querySelector(".live-tag");
+      if(liveTag){
+        liveTag.textContent = state.running ? `live · центр ${fmt(code, center)}` : `центр ${fmt(code, center)}`;
+        liveTag.classList.toggle("on", state.running);
+      }
+      const info = bandInfo(code, center);
+      const pm = card.querySelector(`[data-pm="${code}"]`);
+      const rng = card.querySelector(`[data-rng="${code}"]`);
+      if(pm) pm.innerHTML = `<strong>${info.pm}</strong>`;
+      if(rng) rng.textContent = info.rng;
+      const fill = card.querySelector(`[data-band-fill="${code}"]`);
+      if(fill){
+        const pad = 8, usable = 100 - pad * 2;
+        fill.style.left = `${pad}%`;
+        fill.style.width = `${info.lo + info.hi > 0 ? usable : 0}%`;
+      }
+      const needle = card.querySelector(`[data-band-needle="${code}"]`);
+      if(needle){
+        const span = Math.max(info.lo + info.hi, 1e-9);
+        const pad = 8, usable = 100 - pad * 2;
+        const pct = info.lo + info.hi > 0
+          ? pad + usable * ((live - (center - info.lo)) / span)
+          : 50;
+        needle.style.left = `${Math.min(100 - pad, Math.max(pad, pct))}%`;
+      }
+      const loLab = card.querySelector(`[data-lo-lab="${code}"]`);
+      const hiLab = card.querySelector(`[data-hi-lab="${code}"]`);
+      if(loLab) loLab.textContent = fmt(code, center - info.lo);
+      if(hiLab) hiLab.textContent = fmt(code, center + info.hi);
+      const loShow = card.querySelector(`[data-lo-show="${code}"]`);
+      const hiShow = card.querySelector(`[data-hi-show="${code}"]`);
+      if(loShow) loShow.textContent = fmt(code, info.lo);
+      if(hiShow) hiShow.textContent = fmt(code, info.hi);
+      const intenEm = card.querySelector(`[data-inten-lab="${code}"]`);
+      if(intenEm) intenEm.textContent = `${Math.round(info.inten*100)}% · ${intenLabel(info.inten)}`;
+      // Never rewrite inputs while this card is being dragged — that snaps the thumb back.
+      if(busy || labelsOnly) return;
+      const range = card.querySelector(`[data-value-range="${code}"]`);
+      if(range && document.activeElement !== range) range.value = center;
+      const setNum = (sel, v) => { const el = card.querySelector(sel); if(el && document.activeElement !== el) el.value = fmt(code, v); };
+      const setRange = (sel, v) => { const el = card.querySelector(sel); if(el && document.activeElement !== el) el.value = v; };
+      setNum(`[data-lo-num="${code}"]`, info.lo);
+      setNum(`[data-hi-num="${code}"]`, info.hi);
+      setRange(`[data-lo="${code}"]`, info.lo);
+      setRange(`[data-hi="${code}"]`, info.hi);
+      setRange(`[data-inten="${code}"]`, info.inten);
+    }
+
+    function paintLiveOnly(){
+      // Soft refresh during drag: update numbers, leave sliders alone.
+      for(const m of visibleMetrics()){
+        const center = state.manual[m.code] ?? base(m.code);
+        paintSensorValue(m.code, center, { labelsOnly: state.dragging === m.code });
+      }
+    }
+
+    function bindDrag(inp, code, onMove, onEnd){
+      let armed = false;
+      const start = (e) => {
+        armed = true;
+        state.dragging = code;
+        try { inp.setPointerCapture?.(e.pointerId); } catch (_) {}
+      };
+      const move = () => {
+        state.dragging = code;
+        onMove();
+      };
+      const end = () => {
+        if(!armed && state.dragging !== code) return;
+        armed = false;
+        try { onEnd(); } finally { if(state.dragging === code) state.dragging = null; }
+      };
+      inp.onpointerdown = start;
+      inp.oninput = move;
+      inp.onchange = end;
+      inp.onpointerup = end;
+      inp.onpointercancel = end;
+    }
+
+    function renderSensors(){
+      if(state.dragging) return;
+      const channels = Object.fromEntries((state.snapshot?.channels||[]).map(c=>[c.code,c]));
+      $("sensors").innerHTML = visibleMetrics().map(m=>{
+        const ch = channels[m.code];
+        const on = state.enabled.has(m.code);
+        const center = state.manual[m.code] ?? ch?.value ?? base(m.code);
+        const live = (state.running && ch?.value != null) ? ch.value : center;
+        const band = ch?.band || "green";
+        const fault = ch?.fault;
+        const jMax = jitterMax(m);
+        const jStep = jitterStep(m);
+        const b = base(m.code);
+        const info = bandInfo(m.code, center);
+        const inten = state.intensity[m.code] ?? 0.55;
+        const span = Math.max(info.lo + info.hi, 1e-9);
+        const pad = 8, usable = 100 - pad * 2;
+        const needlePct = info.lo + info.hi > 0
+          ? pad + usable * ((live - (center - info.lo)) / span)
+          : 50;
+        // Same knobs for every channel (incl. Кардіограма): Центр + −/+ + інтенсивність.
+        const liveTag = state.running ? `live · центр ${fmt(m.code,center)}` : `центр ${fmt(m.code,center)}`;
+        return `<article class="sensor ${on?"enabled":""} ${band}" data-code="${m.code}">
+          <button type="button" class="toggle ${on?"on":""}" data-en="${m.code}" title="увімкнути" aria-pressed="${on}"><i></i></button>
+          <div style="min-width:0">
+            <div class="sensor-title">${m.label} ${fault?`<span class="fault-tag">${fault}</span>`:""}</div>
+            <div class="sensor-code">${m.code} · ${m.schedule||""}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="value">${fmt(m.code,live)}</span><span class="unit">${m.unit}</span>
+            <div class="live-tag ${state.running?"on":""}">${liveTag}</div>
+            <div class="band ${band}">${band}</div>
+          </div>
+          <div class="sensor-controls">
+            <div class="slide">
+              <span class="tag">Центр</span>
+              <div class="range-wrap">
+                <div class="ends"><span>${fmt(m.code,m.min)}</span><span>база ${fmt(m.code,b)}</span><span>${fmt(m.code,m.max)}</span></div>
+                <input type="range" min="${m.min}" max="${m.max}" step="${m.step}" value="${center}" data-value-range="${m.code}" ${on?"":"disabled"} aria-label="Центр ${m.label}" />
+              </div>
+              <button type="button" class="btn filled sm send" data-send="${m.code}" ${on?"":"disabled"} title="Надіслати точний центр">OK</button>
+            </div>
+            <div class="dev-panel">
+              <div class="dev-row">
+                <div class="dev-side minus">
+                  <div class="lab"><span>Мінус −</span><em data-lo-show="${m.code}">${fmt(m.code, info.lo)}</em></div>
+                  <div class="pair">
+                    <input class="dev-range" type="range" min="0" max="${jMax}" step="${jStep}" value="${info.lo}" data-lo="${m.code}" ${on?"":"disabled"} aria-label="Мінус ${m.label}" />
+                    <input class="jnum" type="number" min="0" max="${jMax}" step="${jStep}" value="${fmt(m.code, info.lo)}" data-lo-num="${m.code}" ${on?"":"disabled"} />
+                  </div>
+                </div>
+                <div class="dev-side plus">
+                  <div class="lab"><span>Плюс +</span><em data-hi-show="${m.code}">${fmt(m.code, info.hi)}</em></div>
+                  <div class="pair">
+                    <input class="dev-range" type="range" min="0" max="${jMax}" step="${jStep}" value="${info.hi}" data-hi="${m.code}" ${on?"":"disabled"} aria-label="Плюс ${m.label}" />
+                    <input class="jnum" type="number" min="0" max="${jMax}" step="${jStep}" value="${fmt(m.code, info.hi)}" data-hi-num="${m.code}" ${on?"":"disabled"} />
+                  </div>
+                </div>
+              </div>
+              <div class="inten">
+                <div class="lab"><span>Інтенсивність</span><em data-inten-lab="${m.code}">${Math.round(inten*100)}% · ${intenLabel(inten)}</em></div>
+                <input class="inten-track" type="range" min="0" max="1" step="0.01" value="${inten}" data-inten="${m.code}" ${on?"":"disabled"} aria-label="Інтенсивність ${m.label}" />
+                <div class="inten-marks"><span>спокійно</span><span>мʼяко</span><span>живіше</span><span>шалено</span></div>
+              </div>
+              <div class="band-viz" aria-hidden="true">
+                <div class="fill" data-band-fill="${m.code}" style="left:${pad}%;width:${info.lo+info.hi>0?usable:0}%"></div>
+                <div class="needle" data-band-needle="${m.code}" style="left:${needlePct}%"></div>
+                <div class="labels"><span data-lo-lab="${m.code}">${fmt(m.code, center - info.lo)}</span><span data-hi-lab="${m.code}">${fmt(m.code, center + info.hi)}</span></div>
+              </div>
+              <div class="band-meta">
+                <span data-pm="${m.code}"><strong>${info.pm}</strong></span>
+                <span data-rng="${m.code}">${info.rng}</span>
+              </div>
+            </div>
+          </div>
+        </article>`;
+      }).join("");
+
+      $("sensors").querySelectorAll("[data-en]").forEach(btn=>btn.onclick=(e)=>{
+        e.stopPropagation();
+        const c=btn.dataset.en;
+        if(state.enabled.has(c)) state.enabled.delete(c); else state.enabled.add(c);
+        renderSensors(); patch();
+      });
+      const clampDev = (code, raw) => {
+        const m = state.meta.metrics.find(x=>x.code===code);
+        return Math.min(jitterMax(m), Math.max(0, Number(raw)||0));
+      };
+      const paintDev = (code) => {
+        syncJitterMirror(code);
+        state.auto = false;
+        $("autoToggle").classList.remove("on");
+        paintSensorValue(code, state.manual[code] ?? base(code), { labelsOnly: true });
+        updateTitles();
+      };
+      $("sensors").querySelectorAll("[data-lo]").forEach(inp=>{
+        const code = inp.dataset.lo;
+        bindDrag(inp, code,
+          () => { state.jitterLo[code] = clampDev(code, inp.value); paintDev(code); if(state.running) patch(true); },
+          () => { state.jitterLo[code] = clampDev(code, inp.value); paintDev(code); patch(); livePushSoon([code]); },
+        );
+      });
+      $("sensors").querySelectorAll("[data-hi]").forEach(inp=>{
+        const code = inp.dataset.hi;
+        bindDrag(inp, code,
+          () => { state.jitterHi[code] = clampDev(code, inp.value); paintDev(code); if(state.running) patch(true); },
+          () => { state.jitterHi[code] = clampDev(code, inp.value); paintDev(code); patch(); livePushSoon([code]); },
+        );
+      });
+      $("sensors").querySelectorAll("[data-lo-num]").forEach(inp=>{
+        const code = inp.dataset.loNum;
+        const apply = () => { state.jitterLo[code] = clampDev(code, inp.value); paintDev(code); patch(); quietPush([code]); };
+        inp.onchange = apply;
+        inp.onkeydown = (e)=>{ if(e.key==="Enter"){ e.preventDefault(); apply(); inp.blur(); } };
+      });
+      $("sensors").querySelectorAll("[data-hi-num]").forEach(inp=>{
+        const code = inp.dataset.hiNum;
+        const apply = () => { state.jitterHi[code] = clampDev(code, inp.value); paintDev(code); patch(); quietPush([code]); };
+        inp.onchange = apply;
+        inp.onkeydown = (e)=>{ if(e.key==="Enter"){ e.preventDefault(); apply(); inp.blur(); } };
+      });
+      $("sensors").querySelectorAll("[data-inten]").forEach(inp=>{
+        const code = inp.dataset.inten;
+        bindDrag(inp, code,
+          () => {
+            state.intensity[code] = Math.min(1, Math.max(0, Number(inp.value)||0));
+            paintDev(code);
+            if(state.running) patch(true);
+          },
+          () => {
+            state.intensity[code] = Math.min(1, Math.max(0, Number(inp.value)||0));
+            paintDev(code);
+            patch();
+            livePushSoon([code]);
+          },
+        );
+      });
+      $("sensors").querySelectorAll("[data-value-range]").forEach(inp=>{
+        const code = inp.dataset.valueRange;
+        bindDrag(inp, code,
+          () => {
+            setManualValue(code, Number(inp.value), false);
+            paintSensorValue(code, state.manual[code], { labelsOnly: true });
+            livePushSoon([code]);
+          },
+          () => {
+            setManualValue(code, Number(inp.value), false);
+            clearTimeout(pushTimer);
+            quietPush([code]).then(()=>paintSensorValue(code, state.manual[code])).catch((e)=>log(String(e)));
+          },
+        );
+      });
+      $("sensors").querySelectorAll("[data-send]").forEach(btn=>{
+        btn.onclick=(e)=>{
+          e.stopPropagation();
+          const code=btn.dataset.send;
+          applyManual(code, state.manual[code], true);
+        };
+      });
+    }
+
+    function setManualValue(code, raw, sendNow){
+      const m=state.meta.metrics.find(x=>x.code===code);
+      if(!m) return false;
+      if(raw === "" || raw == null || Number.isNaN(Number(raw))) return false;
+      const value=Math.min(m.max, Math.max(m.min, Number(raw)));
+      state.manual[code]=value;
+      state.auto=false;
+      $("autoToggle").classList.remove("on");
+      updateTitles();
+      if(state.snapshot?.channels){
+        const ch=state.snapshot.channels.find(c=>c.code===code);
+        if(ch){ ch.value=value; ch.fault=null; }
+      }
+      if(sendNow){
+        patch().then(()=>burst(false, [code])).catch(e=>log(String(e)));
+      }
+      return true;
+    }
+
+    function applyManual(code, raw, sendNow){
+      if(!setManualValue(code, raw, false)){
+        toast("Некоректне значення");
+        return;
+      }
+      paintSensorValue(code, state.manual[code]);
+      const go=async()=>{
+        try {
+          await patch();
+          if(sendNow) await burst(false, [code]);
+          else toast(`${code} = ${fmt(code,state.manual[code])}`);
+        } catch (e) {
+          log(String(e));
+          toast("Помилка відправки");
+        }
+      };
+      go();
+    }
+
+    function updateTitles(){
+      const p=state.meta.crew.find(c=>c.id===state.astronaut);
+      $("title").textContent=`Sensors · ${p.name}`;
+      $("hint").textContent = state.auto
+        ? `Авто блукає · ×${state.timeScale} (мінус/плюс + інтенсивність перебивають канал)`
+        : `Центр + мінус/плюс вікно + інтенсивність шуму · OK — точний центр`;
+    }
+
+    let patchTimer=null;
+    async function patch(debounce=false){
+      if(!state.running) return;
+      const send=async()=>{
+        await fetch(`/api/live/${state.astronaut}/patch`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(patchBody())});
+      };
+      if(!debounce) return send();
+      clearTimeout(patchTimer); patchTimer=setTimeout(send,160);
+    }
+
+    async function quietPush(codes, { toastOk=false, randomize=false } = {}){
+      const body={
+        ...cfg(), ...patchBody(), randomize:!!randomize,
+        auto: randomize ? state.auto : false,
+      };
+      if(codes && codes.length) body.codes = codes;
+      if(!randomize){ state.auto=false; $("autoToggle").classList.remove("on"); }
+      const res=await fetch(`/api/live/${state.astronaut}/burst`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){
+        log(`push fail: ${data.detail||res.status}`);
+        if(toastOk) toast("Не надіслано — перевір token");
+        return null;
+      }
+      if(data.snapshot) state.snapshot=data.snapshot;
+      if(toastOk){
+        const label = codes ? codes.join(",") : "ALL";
+        toast(randomize ? `Рандом → ${data.n||0}` : `OK ${label} · ${data.n||0} pkt`);
+        log(`burst ${state.astronaut} n=${data.n} accepted=${data.accepted} codes=${label}`);
+      }
+      return data;
+    }
+
+    function livePushSoon(codes){
+      // Throttled uplink while dragging — panel sees changes ~immediately.
+      clearTimeout(pushTimer);
+      pushTimer=setTimeout(()=>{
+        const job=()=>quietPush(codes).then((data)=>{
+          if(data?.snapshot && !state.dragging) paintLiveOnly();
+        }).catch((e)=>log(String(e)));
+        pushInflight = (pushInflight||Promise.resolve()).then(job, job);
+      }, 90);
+    }
+
+    async function burst(randomize, codes){
+      if(!randomize){ state.auto=false; $("autoToggle").classList.remove("on"); updateTitles(); }
+      const data = await quietPush(codes, { toastOk:true, randomize:!!randomize });
+      if(!data) return;
+      if(state.dragging) paintLiveOnly();
+      else renderSensors();
+      refresh();
+    }
+
+    async function scene(name){
+      const body={...cfg(), scene:name, push:true, activity_mode:state.mode, time_scale:state.timeScale, enabled:[...state.enabled]};
+      const res=await fetch(`/api/live/${state.astronaut}/scene`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){ log(`scene fail: ${data.detail||res.status}`); toast("Scene fail — token?"); return; }
+      state.snapshot=data.snapshot;
+      if(data.snapshot){
+        state.auto=data.snapshot.auto;
+        $("autoToggle").classList.toggle("on", state.auto);
+        for(const ch of data.snapshot.channels||[]){
+          state.manual[ch.code]=ch.value;
+          state.bias[ch.code]=ch.bias;
+        }
+      }
+      toast(`Scene · ${name}`);
+      log(`scene ${name} n=${data.n||0}`);
+      renderSensors();
+      updateTitles();
+    }
+
+    async function refresh(){
+      const data=await fetch(`/api/live/${state.astronaut}`).then(r=>r.json());
+      state.running=!!data.running;
+      state.snapshot=data.snapshot;
+      if(data.snapshot){
+        if(!state.dragging){
+          state.auto=data.snapshot.auto;
+          state.faults=data.snapshot.faults;
+          state.faultRate=data.snapshot.fault_rate;
+          state.stress=data.snapshot.stress;
+          state.mode=data.snapshot.activity_mode||state.mode;
+          if(data.snapshot.time_scale){ state.timeScale=data.snapshot.time_scale; $("liveScale").value=state.timeScale; }
+        }
+        // Don't clobber the card being dragged — patch hasn't landed yet / thumb would snap.
+        for(const ch of data.snapshot.channels||[]){
+          if(state.dragging === ch.code) continue;
+          if(ch.jitter != null) state.jitter[ch.code]=ch.jitter;
+          if(ch.jitter_lo != null) state.jitterLo[ch.code]=ch.jitter_lo;
+          if(ch.jitter_hi != null) state.jitterHi[ch.code]=ch.jitter_hi;
+          if(ch.intensity != null) state.intensity[ch.code]=ch.intensity;
+        }
+      }
+      syncAct();
+      $("runPill").classList.toggle("live", state.running);
+      $("runText").textContent = state.running ? "STREAM" : "IDLE";
+      $("sentPill").classList.toggle("live", (data.sent||0)>0);
+      $("sentText").textContent = `${data.sent||0} PKT` + (data.last_error?` · ERR` : "");
+      $("startBtn").textContent = state.running ? "Update stream" : "Старт stream";
+      if(!state.dragging){
+        $("autoToggle").classList.toggle("on", state.auto);
+        $("faultToggle").classList.toggle("on", state.faults);
+      }
+      syncTokenPill();
+      if(state.dragging) paintLiveOnly();
+      else renderSensors();
+      updateTitles();
+      if(data.last_error) log(`ingest: ${data.last_error}`);
+    }
+
+    $("autoToggle").onclick=()=>{ state.auto=!state.auto; $("autoToggle").classList.toggle("on",state.auto); updateTitles(); patch(); renderSensors(); };
+    $("faultToggle").onclick=()=>{ state.faults=!state.faults; $("faultToggle").classList.toggle("on",state.faults); patch(); };
+    $("faultRate").oninput=()=>{ state.faultRate=Number($("faultRate").value); $("faultRateVal").textContent=`${Math.round(state.faultRate*100)}%`; patch(true); };
+    $("stress").oninput=()=>{ state.stress=Number($("stress").value); $("stressVal").textContent=state.stress.toFixed(2); patch(true); };
+    $("token").oninput=syncTokenPill;
+    $("actSlider").oninput=()=>setMode(MODES[Number($("actSlider").value)||0]);
+    $("actMarks").onclick=(e)=>{
+      const s=e.target.closest("[data-i]"); if(!s) return;
+      setMode(MODES[Number(s.dataset.i)||0]);
+    };
+    $("allOn").onclick=()=>{ state.meta.metrics.forEach(m=>state.enabled.add(m.code)); renderSensors(); patch(); };
+    $("vitalsOnly").onclick=()=>{ state.enabled=new Set(VITALS); state.filter="cont"; renderFilters(); renderSensors(); patch(); };
+    $("burstBtn").onclick=()=>burst(false);
+    $("randomBurstBtn").onclick=()=>burst(true);
+    document.querySelectorAll("[data-scene]").forEach(btn=>btn.onclick=()=>scene(btn.dataset.scene));
+    $("liveScale").oninput=()=>{ state.timeScale=Math.max(1, Number($("liveScale").value)||60); patch(true); updateTitles(); };
+
+    $("startBtn").onclick=async()=>{
+      state.timeScale=Math.max(1, Number($("liveScale").value)||60);
+      const body={
+        ...cfg(), ...patchBody(), astronaut_id:state.astronaut, seed:1,
+      };
+      const res=await fetch("/api/live/start",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){ log(`start fail: ${data.detail||res.status}`); toast("Не стартувало — token?"); return; }
+      toast("Stream ON"); log(`live ${state.astronaut} ON`);
+      refresh();
+    };
+    $("stopBtn").onclick=async()=>{
+      await fetch(`/api/live/${state.astronaut}/stop`,{method:"POST"});
+      toast("Stop"); log(`live ${state.astronaut} OFF`);
+      refresh();
+    };
+
+    $("savePreset").onclick=async()=>{
+      const name=`${state.astronaut}-${state.auto?"auto":"manual"}-${Date.now().toString(36).slice(-4)}`;
+      const body={ name, astronaut_id:state.astronaut, ...patchBody() };
+      await fetch("/api/presets",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      toast("Preset saved"); log(`preset ${name}`);
+    };
+
+    $("runScenario").onclick=async()=>{
+      const body={...cfg(), scenario:$("scenario").value, astronaut:state.astronaut, time_scale:Number($("scale").value||60)};
+      const res=await fetch("/api/run",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){ log(`scenario: ${data.detail||res.status}`); return; }
+      log(`scenario ${data.id}`);
+    };
+
+    async function boot(){
+      state.meta=await fetch("/api/meta").then(r=>r.json());
+      if(state.meta.device_token_default) $("token").value=state.meta.device_token_default;
+      if(state.meta.backend) $("backend").value=state.meta.backend;
+      if(state.meta.default_time_scale){ state.timeScale=state.meta.default_time_scale; $("liveScale").value=state.timeScale; $("scale").value=state.timeScale; }
+      $("scenario").innerHTML=state.meta.scenarios.map(s=>`<option value="${s}">${s}</option>`).join("");
+      seed(); renderCrew(); renderFilters(); renderSensors(); updateTitles(); syncTokenPill(); syncAct();
+      log("Generator ready");
+      await refresh();
+      setInterval(refresh, 800);
+    }
+    boot().catch(e=>log(String(e)));
+  </script>
+</body>
+</html>

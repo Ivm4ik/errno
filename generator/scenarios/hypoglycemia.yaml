@@ -1,0 +1,9 @@
+name: hypoglycemia
+astronaut: A1
+duration: 120
+timeline:
+  - {at: 0, duration: 120, metric: GLU, effect: hold, magnitude: 40}
+activity_schedule:
+  - {at: 0, duration: 120, mode: rest}
+expect:
+  - {at: 20, astronaut: A1, status: 2, breakglass: true}

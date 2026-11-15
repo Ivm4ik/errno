@@ -1,0 +1,10 @@
+name: comms_loss_buffering
+astronaut: A1
+duration: 90
+buffered_from: 40
+timeline:
+  - {at: 20, duration: 20, metric: HR, effect: dropout}
+activity_schedule:
+  - {at: 0, duration: 90, mode: rest}
+expect:
+  - {at: 70, astronaut: A1, status: 0}

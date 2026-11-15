@@ -1,0 +1,9 @@
+name: co2_leak
+astronaut: A1
+duration: 60
+timeline:
+  - {at: 0, duration: 60, metric: CO2, effect: hold, magnitude: 1.5}
+activity_schedule:
+  - {at: 0, duration: 60, mode: rest}
+expect:
+  - {at: 15, astronaut: A1, status: 2, breakglass: true}
